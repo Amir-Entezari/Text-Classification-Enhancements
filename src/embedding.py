@@ -32,3 +32,20 @@ def create_word_embeddings(X, word_vectors):
     """
     return [document_embedding(doc, word_vectors) for doc in X]
 
+
+def apply_lsa(X_train, X_test, n_components=100):
+    """
+    Apply Latent Semantic Analysis (LSA) to the document embeddings.
+
+    Parameters:
+    - X_train (list of numpy.ndarray): Document embeddings of the training set.
+    - X_test (list of numpy.ndarray): Document embeddings of the test set.
+    - n_components (int): Number of components to keep in the truncated SVD.
+
+    Returns:
+    - tuple: Tuple containing the transformed training and test sets after applying LSA.
+    """
+    lsa = TruncatedSVD(n_components=n_components, random_state=42)
+    X_train_lsa = lsa.fit_transform(X_train)
+    X_test_lsa = lsa.transform(X_test)
+    return X_train_lsa, X_test_lsa
