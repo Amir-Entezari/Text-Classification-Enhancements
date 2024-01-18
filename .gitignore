@@ -5,3 +5,7 @@ __pycache__/
 .idea/
 .Rhistory
 /dataset/raw/aclImdb_v1/
+/dataset/preprocessed/test_neg.csv
+/dataset/preprocessed/test_pos.csv
+/dataset/preprocessed/train_neg.csv
+/dataset/preprocessed/train_pos.csv
