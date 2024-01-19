@@ -1,44 +1,21 @@
 import os
 import re
+import string
+
 import pandas as pd
 import requests
 import tarfile
+import nltk
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 
-# Initialize NLTK stop words
-stop_words = set(stopwords.words('english'))
-
-
-def preprocess(text):
-    """
-    Applies some pre-processing on the given text.
-
-    Steps :
-    - Removing HTML tags
-    - Removing punctuation
-    - Lowering text
-    """
-
-    # remove HTML tags
-    text = re.sub(r'<.*?>', '', text)
-
-    # remove the characters [\], ['] and ["]
-    text = re.sub(r"\\", "", text)
-    text = re.sub(r"\'", "", text)
-    text = re.sub(r"\"", "", text)
-
-    # convert text to lowercase
-    text = text.strip().lower()
-
-    # replace punctuation characters with spaces
-    filters = '!"\'#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n'
-    translate_dict = dict((c, " ") for c in filters)
-    translate_map = str.maketrans(translate_dict)
-    text = text.translate(translate_map)
-
-    return text
+# Download necessary NLTK datasets
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
 
 
 def load_train_test_imdb_data(data_dir):
@@ -63,7 +40,7 @@ def load_train_test_imdb_data(data_dir):
 
                 with open(os.path.join(path, f_name), "r") as f:
                     review = f.read()
-                    data[split].append([ID, preprocess(review), int(score)])
+                    data[split].append([ID, review, int(score)])
 
     # np.random.shuffle(data["train"])
     data["train"] = pd.DataFrame(data["train"],
@@ -74,30 +51,28 @@ def load_train_test_imdb_data(data_dir):
     return data["train"], data["test"]
 
 
-def preprocess_text(text):
-    """
-    Preprocesses the text by tokenizing, converting to lowercase, removing punctuation,
-    and filtering out stop words.
-    """
-    # Convert to lowercase
-    text = text.lower()
-    # Remove punctuation
-    text = re.sub(r'[^\w\s]', '', text)
-    # Tokenize text
+def preprocess_text(text, remove_stopwords=True, stemming=True, lemmatization=True):
+    # Tokenize the text
     tokens = word_tokenize(text)
-    # Filter out stop words
-    filtered_tokens = [token for token in tokens if token not in stop_words]
-    return filtered_tokens
 
+    # Convert to lower case
+    tokens = [token.lower() for token in tokens]
 
-def preprocess_documents(documents):
-    """
-    Apply text preprocessing to each document in the dictionary.
-    """
-    preprocessed_docs = []
-    for doc_id, content in enumerate(documents):
-        preprocessed_docs.append(preprocess_text(content))
-    return preprocessed_docs
+    # Remove stopwords
+    if remove_stopwords:
+        stop_words = set(stopwords.words('english') + list(string.punctuation))
+        tokens = [token for token in tokens if token not in stop_words and token.isalpha()]
+
+    # Stemming
+    if stemming:
+        stemmer = PorterStemmer()
+        tokens = [stemmer.stem(token) for token in tokens]
+    # Lemmatization
+    if lemmatization:
+        lemmatizer = WordNetLemmatizer()
+        tokens = [lemmatizer.lemmatize(token) for token in tokens]
+
+    return ' '.join(tokens)
 
 
 if __name__ == '__main__':
